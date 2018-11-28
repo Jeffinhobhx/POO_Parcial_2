@@ -1,0 +1,34 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head> 
+    <title>Pratica 2</title> 
+    <meta http-equiv="Content-Type" 
+    	content="text/html; charset=UTF-8" />
+</head>
+<body>
+    
+    <P><H2>CARTOLA FC</H2></P>
+    <P><H4>Jogadores com o maior índice, por posição.</H4></P>
+    
+    <p><H4><a href="cartoletas">Escale seu time agora.</a></H4></p>
+    
+   <table border="1" style="width:500px">
+
+            <tr>
+	        <td>Nome </td>
+	        <td>Posição </td>
+	        <td>Preço </td>
+	        <td>Probabilidade </td>
+            </tr>
+            
+	    <tr th:each="jogador : ${jogadores}">
+	        <td th:text="${jogador.jogador}"></td>
+	        <td th:text="${jogador.posicao}"></td>
+	        <td th:text="${jogador.preco}"></td>
+	        <td th:text="${jogador.probabilidade}"></td>
+            </tr>
+           
+	</table>
+
+</body>
+</html>

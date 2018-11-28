@@ -1,0 +1,11 @@
+CartolaFC\modeloDAO\CartoletaDAO.class
+CartolaFC\modelodados\Jogador.class
+CartolaFC\modelodados\Time.class
+CartolaFC\interfacegrafica\CartolaFCApplication.class
+CartolaFC\controladores\JogadorController.class
+CartolaFC\modelodados\Cartoleta.class
+CartolaFC\controladores\TimeController.class
+CartolaFC\config\Conexao.class
+CartolaFC\controladores\CartoletaController.class
+CartolaFC\modeloDAO\TimeDAO.class
+CartolaFC\modeloDAO\JogadorDAO.class

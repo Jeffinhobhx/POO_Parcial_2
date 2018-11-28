@@ -1,0 +1,169 @@
+-- Database: cartolafc2018
+
+-- DROP DATABASE cartolafc2018;
+
+CREATE DATABASE cartolafc2018
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'Portuguese_Brazil.1252'
+    LC_CTYPE = 'Portuguese_Brazil.1252'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+
+COMMENT ON DATABASE cartolafc2018
+    IS 'Dicas de times para cartola 2018.';
+	
+INSERT INTO cartoletas VALUES (150);
+
+SELECT SUM(preco) FROM temp_cartolafc2018;
+
+--SELECT * FROM temp_cartolafc2018;
+--SELECT * FROM cartoletas;
+
+--CRIA TABELA MATRIZ COMPLETA 
+DROP TABLE IF EXISTS cartolafc2018;
+CREATE TABLE cartolafc2018(
+    chave VARCHAR(50) PRIMARY KEY NOT NULL,
+    time VARCHAR(50) NOT NULL,
+    jogador VARCHAR(50) NOT NULL,
+    posicao VARCHAR(50) NOT NULL,
+	preco NUMERIC(6,2) NOT NULL,
+    probabilidade NUMERIC(6,2) NOT NULL
+	);
+
+--COPIA OS DADOS CONTIDOS NO ARQUIVO PARA O BANCO
+COPY cartolafc2018(chave,time,jogador,posicao, preco, probabilidade) 
+FROM 'C:\tmp\Poo2_Cartola.csv' DELIMITER ';' CSV HEADER;
+
+--CRIA TABELA PROVISORIA COM AS CARTOLETAS ENVIADAS PELO JAVA COMPLETA 
+DROP TABLE IF EXISTS cartoletas;
+CREATE TABLE cartoletas(
+	cartoletas char
+	);
+	
+--TABELA PARA COMPARACAO DE DADOS
+DROP TABLE IF EXISTS valor_restante;
+CREATE TABLE public.valor_restante(
+    preco numeric(6,2),
+	atual numeric(6,2),
+	soma numeric(6,2),
+	resta numeric(6,2)
+	);
+
+--TABELA ONDE VAI FICAR A ESCALACAO
+DROP TABLE IF EXISTS escalacao;
+CREATE TABLE public.escalacao(
+    jogador CHAR(50),
+	posicao CHAR(50),
+	preco NUMERIC(6,2),
+	probabilidade NUMERIC(6,2)
+	);
+	
+--SELECT * FROM cartolafc2018;
+
+--DROP FUNCTION IF EXISTS funcao_escalar() CASCADE;
+
+-- FUNCAO PARA ESCALAR
+CREATE OR REPLACE FUNCTION funcao_escalar() RETURNS TRIGGER AS $emp_audit$
+
+BEGIN
+
+--TABELA PARA DADOS TEMPORARIOS
+DROP TABLE IF EXISTS temp_cartolafc2018;
+CREATE TABLE public.temp_cartolafc2018(
+    jogador CHAR(50),
+	posicao CHAR(50),
+	preco NUMERIC(6,2),
+	probabilidade NUMERIC(6,2)
+	);
+
+--INSERE OS VALORES NA TABELA TEMPORARIA, O RESTA DEVE SER A VARIAVEL QUE VAI PEGAR AS CARTOLETAS
+INSERT INTO valor_restante VALUES (0,0,0,1);
+--SELECT * from valor_restante;
+UPDATE valor_restante SET resta = (SELECT cartoletas FROM cartoletas);
+UPDATE valor_restante SET preco = resta / 12;
+
+--SELECT * FROM valor_restante
+
+--TECNICO
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'TECNICO' and a.preco < b.preco LIMIT 1;
+UPDATE valor_restante SET atual = (SELECT SUM(a.preco) FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'TECNICO' and a.preco < b.preco LIMIT 1);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+UPDATE valor_restante SET preco = resta / 11 ;
+
+
+--GOLEIRO
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'GOLEIRO' and a.preco < b.preco LIMIT 1;
+UPDATE valor_restante SET atual = (SELECT a.preco FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'GOLEIRO' and a.preco < b.preco LIMIT 1);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+UPDATE valor_restante SET preco = resta / 10;
+
+--SELECT * FROM valor_restante
+
+--ZAGUEIRO
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'ZAGUEIRO' and a.preco < b.preco LIMIT 2;
+UPDATE valor_restante SET atual = (SELECT SUM(a.preco) FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'ZAGUEIRO' and a.preco < b.preco LIMIT 2);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+UPDATE valor_restante SET preco = resta / 8;
+
+--SELECT * FROM valor_restante
+
+--LATERAL
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'LATERAL' and a.preco < b.preco LIMIT 2;
+UPDATE valor_restante SET atual = (SELECT SUM(a.preco) FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'LATERAL' and a.preco < b.preco LIMIT 2);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+UPDATE valor_restante SET preco = resta / 5;
+
+--SELECT * FROM valor_restante
+
+--MEIAS
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'MEIA' and a.preco < b.preco LIMIT 3;
+UPDATE valor_restante SET atual = (SELECT SUM(a.preco) FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'MEIA' and a.preco < b.preco LIMIT 3);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+UPDATE valor_restante SET preco = resta / 3;
+
+--SELECT * FROM valor_restante
+
+--ATACANTES
+INSERT INTO temp_cartolafc2018(jogador, posicao, preco, probabilidade)
+SELECT a.jogador,a.posicao,a.preco,a.probabilidade
+FROM cartolafc2018 a, valor_restante b
+WHERE posicao = 'ATACANTE' and a.preco < b.preco LIMIT 3;
+UPDATE valor_restante SET atual = (SELECT SUM(a.preco) FROM temp_cartolafc2018 a,valor_restante b WHERE posicao = 'ATACANTE' and a.preco < b.preco LIMIT 3);
+UPDATE valor_restante SET soma = soma + atual;
+UPDATE valor_restante SET resta = resta - atual;
+
+--PASSANDO OS DADOS PARA A TABELA ESCALACAO
+--INSERT INTO escalacao(jogador, posicao, preco, probabilidade) SELECT * FROM temp_cartolafc2018;
+
+DELETE FROM valor_restante;
+DELETE FROM cartoletas;
+
+RETURN NEW;
+END;
+$emp_audit$ language plpgsql;
+
+-- DROP TRIGGER escalando ON cartoletas;
+-- GATILHO PARA INICIAR a FUNCAO
+CREATE TRIGGER escalando AFTER INSERT ON cartoletas FOR EACH ROW EXECUTE PROCEDURE funcao_escalar();

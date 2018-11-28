@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head> 
+    <title>Pratica 2</title> 
+    <meta http-equiv="Content-Type" 
+    	content="text/html; charset=UTF-8" />
+</head>
+<body>
+    
+        <P><H2>CARTOLA FC</H2></P>
+        <P><H4>Após clicar em "Salvar", aguarde o final do carregamento da aba<br/>
+            e veja seu time no link "sua Escalação"</H4></P>
+            
+            <p><a href="times">Sua escalação.</a> <a href="jogadores">Listar Apostas.</a></p>
+                
+
+                <form action="#" th:action="@{/salvarcartoleta}" 
+                            th:object="${cartoleta}" method="post">
+                        <label>Informe suas cartoletas. Ex: 100.00</label>
+                        <input type="text" th:field="*{cartoleta}"/> <br/>
+                    <button type="submit">Salvar</button>
+                </form>
+
+
+            
+</body>
+</html>
